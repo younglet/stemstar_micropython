@@ -2,6 +2,10 @@ from sg90 import Servo
 from machine import Pin
 from time import sleep
 
+# 引脚接线说明
+# Signal  -> GPIO4
+
+
 servo = Servo(Pin(4))
 
 
