@@ -1,24 +1,21 @@
 # MicroPython 自制驱动与案例项目
 
-这是一个专注于自制硬件驱动开发的MicroPython项目，包括了驱动程序、驱动测试代码以及基于这些驱动实现的案例项目代码。
+这是一个专注于自制硬件驱动和完整项目开发的MicroPython项目，包括了驱动程序、驱动测试代码以及基于这些驱动实现的案例项目代码。
 
 ## 项目结构
 ```
-micropython-project/
+root /
 │
 ├── lib/           # 存放自制的驱动库
-│   ├── driver1.py
-│   ├── driver2.py
+│   ├── led.py     # LED 控制驱动
 │   └── ...
 │
 ├── test/          # 硬件测试程序目录
-│   ├── test_driver1.py
-│   ├── test_driver2.py
+│   ├── test_led.py # LED 功能测试脚本
 │   └── ...
 │
 └── demo/          # 案例项目代码目录
-├── project_example1.py
-├── project_example2.py
+├── demo1.py
 └── ...
 ```
 
@@ -30,4 +27,28 @@ micropython-project/
 from driver1 import Driver1
 
 driver = Driver1()
+```
+
+### 测试代码
+测试代码位于`test/`目录下，其中文件可以镜像拷贝到micropython设备的`test/`目录下。
+例如，当你运行led发光二极管的测试程序时，会显示一条消息请求确认接线是否已完成：
+```Shell
+【LED测试程序】
+──────────────────────────────────────────────
+【LED】   ->  GPIO2 （PWM 输出）
+──────────────────────────────────────────────
+请按照如上接线说明进行接线，然后回车继续：
+```
+确认接线正确后，按回车键继续。可以观察测试程序输出的日志信息，你会看到一系列的操作被执行，包括打开和关闭 LED、执行闪烁、淡入淡出以及呼吸灯效果。
+如果一切正常，LED 的行为应该会和shell 输出的日志信息同步。
+```Shell
+🚩 开始测试 LED 功能...
+🔧 正在初始化LED...
+💡 正在打开 LED
+💡 正在关闭 LED
+✨ 正在执行 blink 闪烁
+🌅 正在执行 fade_in 淡入
+🌇 正在执行 fade_out 淡出
+🌬️ 正在执行 breathe 呼吸灯
+🎉 所有测试完成！
 ```
