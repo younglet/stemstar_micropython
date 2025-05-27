@@ -39,7 +39,6 @@ class Button:
 
 
 if __name__ == "__main__":
-    from button import Button
     from machine import Pin
     import time
 
