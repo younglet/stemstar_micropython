@@ -17,6 +17,8 @@ class Button:
         self.debounce_delay = debounce_delay
         self.last_debounce_time = time.ticks_ms()
         self.state = self.last_state
+        self.last_click_time = 0  # 可选：用于防止连续误判
+        self.previous_stable_state = self.state
 
     def is_pressed(self):
         """
@@ -36,6 +38,27 @@ class Button:
             self.state = self.last_state
             
         return self.state
+
+    def is_clicked(self, min_interval=50):
+        """
+        判断是否发生了一次点击（按下后松开）
+        :param min_interval: 最小点击间隔（毫秒），防止连续误判
+        :return: bool
+        """
+        current_state = self.is_pressed()
+        prev = self.previous_stable_state
+
+        # 更新 previous_stable_state
+        if time.ticks_diff(time.ticks_ms(), self.last_debounce_time) > self.debounce_delay:
+            self.previous_stable_state = current_state
+
+        now = time.ticks_ms()
+        # 检测从高到低的下降沿（即松开时）
+        if prev and not current_state:
+            if now - self.last_click_time > min_interval:
+                self.last_click_time = now
+                return True
+        return False
 
 
 if __name__ == "__main__":
@@ -58,14 +81,8 @@ if __name__ == "__main__":
         btn_pin = Pin(2, Pin.IN, Pin.PULL_DOWN)
         btn = Button(btn_pin)
 
-        print("🔘 等待首次按下按钮...")
-        while True:
-            if btn.is_pressed():
-                print("✅ 按钮已按下")
-                break
-            time.sleep_ms(10)
-
-        print("\n🔁 进入实时按钮状态监测（持续5秒）...")
+        # ===== 测试 is_pressed() =====
+        print("\n🔘 正在测试 is_pressed()（持续5秒）...")
         start_time = time.ticks_ms()
         while time.ticks_diff(time.ticks_ms(), start_time) < 5000:
             if btn.is_pressed():
@@ -73,10 +90,22 @@ if __name__ == "__main__":
             else:
                 print("⚪ 按钮未按下", end='\r')
             time.sleep_ms(50)
+        print("\n✅ is_pressed() 测试完成")
 
-        print("\n🔚 按钮状态监测结束")
 
-        print("🎉 所有测试完成！")
+        # ===== 测试 is_clicked() =====
+        print("\n🔘 正在测试 is_clicked()（持续10秒）...")
+        print("👉 请在这段时间内尝试多次按下并松开按钮以测试点击检测\n")
+        start_time = time.ticks_ms()
+        click_count = 0
+        while time.ticks_diff(time.ticks_ms(), start_time) < 10000:
+            if btn.is_clicked():
+                click_count += 1
+                print(f"👇 检测到一次完整点击！（第 {click_count} 次）")
+            time.sleep_ms(50)
+        print("✅ is_clicked() 测试完成")
+
+        print("\n🔚 所有测试已完成！")
 
     except KeyboardInterrupt:
         print("\n程序已退出")

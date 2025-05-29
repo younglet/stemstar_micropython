@@ -18,14 +18,8 @@ try:
     btn_pin = Pin(2, Pin.IN, Pin.PULL_DOWN)
     btn = Button(btn_pin)
 
-    print("🔘 等待首次按下按钮...")
-    while True:
-        if btn.is_pressed():
-            print("✅ 按钮已按下")
-            break
-        time.sleep_ms(10)
-
-    print("\n🔁 进入实时按钮状态监测（持续5秒）...")
+    # ===== 测试 is_pressed() =====
+    print("\n🔘 正在测试 is_pressed()（持续5秒）...")
     start_time = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), start_time) < 5000:
         if btn.is_pressed():
@@ -33,10 +27,22 @@ try:
         else:
             print("⚪ 按钮未按下", end='\r')
         time.sleep_ms(50)
+    print("\n✅ is_pressed() 测试完成")
 
-    print("\n🔚 按钮状态监测结束")
 
-    print("🎉 所有测试完成！")
+    # ===== 测试 is_clicked() =====
+    print("\n🔘 正在测试 is_clicked()（持续10秒）...")
+    print("👉 请在这段时间内尝试多次按下并松开按钮以测试点击检测\n")
+    start_time = time.ticks_ms()
+    click_count = 0
+    while time.ticks_diff(time.ticks_ms(), start_time) < 10000:
+        if btn.is_clicked():
+            click_count += 1
+            print(f"👇 检测到一次完整点击！（第 {click_count} 次）")
+        time.sleep_ms(50)
+    print("✅ is_clicked() 测试完成")
+
+    print("\n🔚 所有测试已完成！")
 
 except KeyboardInterrupt:
     print("\n程序已退出")
