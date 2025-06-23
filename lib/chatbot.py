@@ -10,7 +10,7 @@ class ChatBot:
     """
     def __init__(self,  api_key="sk-9c7380369ed8496490c93942cfcdf2ad", 
                         prompt="reply in Chinese, within 20 words",
-                        ready_message=None,
+                        ready_message='我准备好了， 一起来聊天吧！',
                         bot_avatar='🤖',
                         user_avatar='🤔'):
         self.bot_avatar = bot_avatar
