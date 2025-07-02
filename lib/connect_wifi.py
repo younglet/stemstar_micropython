@@ -1,7 +1,7 @@
 import time
 import network
 
-def connect_wifi(ssid='stemstaroffice', password='ilovestem', timeout=10, retry=1):
+def connect_wifi(ssid='stemstaroffice', password='ilovestem', timeout=10, retry=1, hostname=None):
     """
     连接指定的 Wi-Fi 网络，带超时控制和重试机制。
     
@@ -9,12 +9,19 @@ def connect_wifi(ssid='stemstaroffice', password='ilovestem', timeout=10, retry=
     :param password: Wi-Fi 密码
     :param timeout: 单次连接等待时间（秒）
     :param retry: 重试次数（默认不重试）
+    :param hostname: 本地主机名
     :return: 成功返回 True，否则 False
     """
     wlan = network.WLAN(network.STA_IF)
+    
+    if hostname:
+        network.hostname(hostname)
 
     if wlan.isconnected():
         print(f"✅ 已经连接到 Wi-Fi:{ssid}")
+        print("📶 网络配置:", wlan.ifconfig())
+        if hostname:
+            print(f"🖥️ 本设备的局域网地址为：{network.hostname()}.local")
         return True
 
     for attempt in range(retry + 1):
@@ -31,6 +38,8 @@ def connect_wifi(ssid='stemstaroffice', password='ilovestem', timeout=10, retry=
         if wlan.isconnected():
             print(f"\n🎉 成功连接到 Wi-Fi:{ssid}")
             print("📶 网络配置:", wlan.ifconfig())
+            if hostname:
+                print(f"🖥️ 本设备的局域网地址为：{network.hostname()}.local")
             return True
         else:
             print(f"\n❌ 第 {attempt + 1} 次连接失败：{ssid}")
