@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>RGB灯带控制器</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 引入 Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <!-- 引入 Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+
+        .container {
+            text-align: left;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            background-color: white;
+            width: 100%;
+            max-width: 480px;
+        }
+
+        h1,h2,h3 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+
+        .slider-container label {
+            margin-bottom: 6px;
+            font-size: 16px;
+        }
+
+        .slider-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            background: transparent;
+            height: 20px;
+        }
+
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            background: #ccc;
+            border-radius: 5px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+            margin-top: -7px;
+        }
+
+        input[type="range"]::-moz-range-track {
+            width: 100%;
+            height: 6px;
+            background: #ccc;
+            border-radius: 5px;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+        }
+
+        .slider-value {
+            min-width: 24px;
+            text-align: right;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .color-preview {
+            width: 100%;
+            max-width: 420px;
+            height: 50px;
+            margin: 20px auto;
+            border-radius: 10px;
+            transition: background-color 0.3s ease;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container animate__animated animate__fadeInDown">
+        <h1>RGB灯带控制器</h1>
+        <h3>GPIO20</h2>
+
+        <div class="slider-container">
+            <label for="r">红色:</label>
+            <div class="slider-wrapper">
+                <input type="range" id="r" name="r" min="0" max="255" value="0">
+                <span id="rValue" class="slider-value">0</span>
+            </div>
+        </div>
+
+        <div class="slider-container">
+            <label for="g">绿色:</label>
+            <div class="slider-wrapper">
+                <input type="range" id="g" name="g" min="0" max="255" value="0">
+                <span id="gValue" class="slider-value">0</span>
+            </div>
+        </div>
+
+        <div class="slider-container">
+            <label for="b">蓝色:</label>
+            <div class="slider-wrapper">
+                <input type="range" id="b" name="b" min="0" max="255" value="0">
+                <span id="bValue" class="slider-value">0</span>
+            </div>
+        </div>
+
+        <div class="color-preview" id="colorPreview"></div>
+    </div>
+
+    <!-- JS Libs -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <script>
+        // 确保 DOM 加载完毕再执行脚本
+        document.addEventListener("DOMContentLoaded", function () {
+            const rSlider = document.getElementById('r');
+            const gSlider = document.getElementById('g');
+            const bSlider = document.getElementById('b');
+            const rValue = document.getElementById('rValue');
+            const gValue = document.getElementById('gValue');
+            const bValue = document.getElementById('bValue');
+            const preview = document.getElementById('colorPreview');
+
+            function updateValuesAndPreview() {
+                const r = parseInt(rSlider.value);
+                const g = parseInt(gSlider.value);
+                const b = parseInt(bSlider.value);
+
+                rValue.textContent = r;
+                gValue.textContent = g;
+                bValue.textContent = b;
+
+                preview.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+
+                sendColor(r, g, b); // 每次滑动都自动发送颜色
+            }
+
+            rSlider.oninput = updateValuesAndPreview;
+            gSlider.oninput = updateValuesAndPreview;
+            bSlider.oninput = updateValuesAndPreview;
+
+            let debounceTimer;
+
+            function sendColor(r, g, b) {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    const colorData = { r, g, b };
+
+                    fetch('/strip/color', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(colorData)
+                    })
+                        .then(response => {
+                            if (!response.ok) throw new Error('网络响应异常');
+                            return response.text();
+                        })
+                        .then(data => {
+                            console.log('Success:', data);
+                            toastr.success(`颜色已更新为 RGB(${r},${g},${b})`, '✅ 成功', { timeOut: 1000 });
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            toastr.error('请检查设备或连接状态。', '❌ 设置失败', { timeOut: 2000 });
+                        });
+                }, 300); // 滑动停止后300ms再发送
+            }
+
+            // 初始化预览和数值
+            updateValuesAndPreview();
+        });
+    </script>
+
+</body>
+
+</html>
