@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贪吃蛇控制</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding-top: 60px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 20px 30px;
+            margin: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px #333;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px #333;
+        }
+    </style>
+</head>
+<body>
+
+<h1>贪吃蛇 控制面板</h1>
+<div style="display: flex; justify-content: center; align-items: center;">
+<button class="btn" onclick="sendCommand('left')" style='background-color: #0056b3;'>⬅ 左转</button><br>
+<button class="btn" onclick="sendCommand('right')" style='background-color: #0056b3;'>➡ 右转</button><br>
+</div>
+<button class="btn" onclick="sendCommand('reset')" style='background-color: #ff8888;'>🔄 重新开始</button>
+
+<script>
+function sendCommand(cmd) {
+    fetch(`/${cmd}`, { method: 'GET' })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("请求失败");
+            }
+            return response.text();
+        })
+        .then(data => {
+            console.log(`发送 ${cmd} 成功: `, data);
+        })
+        .catch(error => {
+            console.error("发送命令失败:", error);
+            alert("连接失败，请确保设备已启动并处于同一网络！");
+        });
+}
+</script>
+
+</body>
+</html>
