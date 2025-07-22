@@ -21,6 +21,6 @@ e.add_peer(peer_mac)
 while True:
     if e.any():
         peer_mac, msg = e.recv()
-        led.blink(3, 0.1)
+        led.blink(3, 100)
         print("收到消息：", msg)
     time.sleep(0.2)

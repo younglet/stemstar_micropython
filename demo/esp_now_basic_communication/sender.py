@@ -20,5 +20,5 @@ e.add_peer(peer_mac)
 
 while True:
     e.send(peer_mac, "Hello from B")
-    led.blink(3, 0.1)
+    led.blink(3, 100)
     time.sleep(2)
