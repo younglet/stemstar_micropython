@@ -86,7 +86,7 @@ class ChatBot:
         print(f"{self.bot_avatar}: 已重置聊天记录和提示词。")
 
     def set_prompt(self, prompt):
-        prompt = escape_unicode(prompt) # 针对micropython的josn模块兼容性的特殊处理
+        prompt = escape_unicode(prompt) # 针对micropython的json模块兼容性的特殊处理
         self.messages = [{"role": "system", "content": prompt}]
         print(f"{self.bot_avatar}: 已成功修提示词。")
 
