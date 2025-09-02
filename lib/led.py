@@ -33,6 +33,13 @@ class LED:
         """关闭 LED"""
         self.set_brightness(0)
 
+    def switch(self):
+        """切换 LED 状态"""
+        if self.brightness == 0:
+            self.on()
+        else:
+            self.off()
+
     def blink(self, times=1, interval=500):
         """
         让 LED 闪烁指定次数
