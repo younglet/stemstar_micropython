@@ -9,6 +9,7 @@ class Button:
         初始化按钮对象
         :param pin: 已经配置好的 Pin 实例（输入模式）
         """
+        pin.init(Pin.IN, Pin.PULL_DOWN)
         if not isinstance(pin, Pin):
             raise ValueError("pin 参数必须是 machine.Pin 的实例")
         

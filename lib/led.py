@@ -7,9 +7,11 @@ class LED:
         初始化 LED 并默认启用 PWM 模式
         :param pin: 引脚编号（int）或 Pin 对象
         """
+        
         if isinstance(pin, int):
             self.pin = Pin(pin)
         else:
+            pin = pin.init(Pin.OUT)
             self.pin = pin
 
         # 初始化 PWM
