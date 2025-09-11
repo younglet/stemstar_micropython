@@ -1,7 +1,8 @@
-# mic.py - 高性能声音传感器驱动（支持可选后台定时器 + O(1) 滑动窗口）
-
+# mic.py - 高性能声音传感器驱动（支持可选后台定时器 + O(1) 滑动窗口 + 自动校准）
 
 from machine import ADC, Pin, Timer
+import time
+import math
 
 
 class Microphone:
@@ -12,9 +13,10 @@ class Microphone:
       - use_timer=False: read() 时临时采样 sample_count 次取平均
       - 使用 running_total 实现 O(1) 平均值更新（定时器模式）
       - 兼容 ESP32/ESP8266/RP2050 等平台
+      - 支持自动校准环境噪声基线
     """
 
-    def __init__(self, pin, min_val=0, max_val=100, adc_bits=12,sample_count=50, 
+    def __init__(self, pin, min_val=0, max_val=100, adc_bits=12, sample_count=50, 
                  use_timer=True, timer_id=0, freq=50, peak_threshold=0.15):
         """
         初始化麦克风
@@ -26,6 +28,7 @@ class Microphone:
         :param use_timer: 是否启用后台定时器（默认 True）
         :param timer_id: 定时器 ID（建议 0~3）
         :param freq: 定时更新频率（Hz，默认 50）
+        :param peak_threshold: 峰值检测阈值（相对于最大ADC值的比例）
         """
         # 处理 pin 参数
         if isinstance(pin, int):
@@ -49,6 +52,12 @@ class Microphone:
         self.use_timer = use_timer
         self.peak_threshold = peak_threshold
         self._timer = None
+        
+        # 校准相关变量
+        self._calibrated = False
+        self._noise_floor = 0
+        self._noise_std_dev = 0
+        self._dynamic_threshold = self.peak_threshold
 
         # 核心状态变量
         self._latest_value = 0  # 最新平均值（供 read() 使用）
@@ -97,6 +106,74 @@ class Microphone:
         # 更新最新平均值（O(1)，无 sum()）
         self._latest_value = self._running_total // self.sample_count
 
+    def calibrate(self, duration=3, quiet_environment=True):
+        """
+        自动校准环境噪声基线
+        :param duration: 校准持续时间（秒）
+        :param quiet_environment: 是否在安静环境中校准（True=安静环境，False=当前环境）
+        :return: 成功返回True，失败返回False
+        """
+        if quiet_environment:
+            print("🔇 请保持环境安静，正在进行噪声校准...")
+        else:
+            print("🔊 正在校准当前环境噪声...")
+        
+        print(f"⏱️  校准时长: {duration}秒")
+        
+        # 临时禁用定时器（如果启用）
+        timer_was_running = False
+        if self.use_timer and self._timer is not None:
+            self._timer.deinit()
+            timer_was_running = True
+        
+        try:
+            # 收集样本
+            samples = []
+            start_time = time.ticks_ms()
+            while time.ticks_diff(time.ticks_ms(), start_time) < duration * 1000:
+                samples.append(self.adc.read())
+                time.sleep_ms(10)  # 采样间隔10ms
+            
+            # 计算噪声基线和标准差
+            self._noise_floor = sum(samples) / len(samples)
+            
+            # 计算标准差
+            variance = sum((x - self._noise_floor) ** 2 for x in samples) / len(samples)
+            self._noise_std_dev = math.sqrt(variance)
+            
+            # 设置动态阈值（噪声基线 + 3倍标准差）
+            self._dynamic_threshold = self._noise_floor + 3 * self._noise_std_dev
+            self._calibrated = True
+            
+            print(f"✅ 校准完成!")
+            print(f"   📊 噪声基线: {self._noise_floor:.2f}")
+            print(f"   📈 标准差: {self._noise_std_dev:.2f}")
+            print(f"   🚦 动态阈值: {self._dynamic_threshold:.2f}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ 校准失败: {e}")
+            self._calibrated = False
+            return False
+            
+        finally:
+            # 恢复定时器（如果之前是启用的）
+            if timer_was_running:
+                try:
+                    self._timer.init(
+                        period=1000 // 50,  # 默认50Hz
+                        mode=Timer.PERIODIC,
+                        callback=self._update
+                    )
+                except Exception as e:
+                    print(f"⚠️ 无法恢复定时器: {e}")
+
+    def reset_calibration(self):
+        """重置校准状态，恢复使用固定阈值"""
+        self._calibrated = False
+        print("🔄 已重置校准状态，使用固定阈值")
+
     def read_raw(self):
         """读取单次原始 ADC 值"""
         return self.adc.read()
@@ -137,12 +214,34 @@ class Microphone:
     def peak_detected(self):
         """
         检测是否发生显著声音脉冲
-        当前值 > 平均值 + 15% ADC 范围
+        如果已校准：使用动态阈值（噪声基线 + 3倍标准差）
+        如果未校准：使用固定阈值（peak_threshold * max_adc）
         """
         current = self.read_raw()
         avg = self.read()
-        threshold = self.max_adc * self.peak_threshold
-        return (current - avg) > threshold
+        
+        if self._calibrated:
+            # 使用校准后的动态阈值
+            return (current - avg) > self._dynamic_threshold
+        else:
+            # 使用固定阈值
+            threshold = self.max_adc * self.peak_threshold
+            return (current - avg) > threshold
+
+    @property
+    def is_calibrated(self):
+        """返回是否已进行校准"""
+        return self._calibrated
+
+    @property
+    def noise_floor(self):
+        """返回噪声基线值（仅在校准后有效）"""
+        return self._noise_floor if self._calibrated else None
+
+    @property
+    def noise_std_dev(self):
+        """返回噪声标准差（仅在校准后有效）"""
+        return self._noise_std_dev if self._calibrated else None
 
     def deinit(self):
         """释放资源：关闭定时器"""
@@ -156,7 +255,7 @@ class Microphone:
 # ======================
 
 if __name__ == '__main__':
-    print("🎤 声音传感器测试程序（高性能优化版）")
+    print("🎤 声音传感器测试程序（高性能优化版 + 自动校准）")
 
     try:
         pin_num = int(input("请输入 ADC 引脚号（如 34）: ") or "34")
@@ -219,12 +318,23 @@ if __name__ == '__main__':
         print("💡 提示：尝试更换 timer_id（如 1 或 2）")
         raise
 
+    # 询问是否进行校准
+    calibrate_input = input("是否进行环境噪声校准? (y/n 默认 y): ").strip().lower()
+    if calibrate_input in ('y', 'yes', '1', '', None, 'Yes', 'Y', 'YES'):
+        mic.calibrate(duration=3, quiet_environment=True)
+    else:
+        print("⏭️  跳过校准，使用固定阈值")
+
     print(f"\n✅ 开始监听 (GPIO{pin_num})")
     print(f"⚙️  模式: {'后台定时更新' if use_timer else '每次读取采样'}")
     print(f"⏱️  更新频率: {freq}Hz | 采样数: {sample_count}")
+    print(f"📊 校准状态: {'✅ 已校准' if mic.is_calibrated else '❌ 未校准'}")
+    if mic.is_calibrated:
+        print(f"   📈 噪声基线: {mic.noise_floor:.2f}")
+        print(f"   📊 标准差: {mic.noise_std_dev:.2f}")
     print("🔊 制造声音观察变化，按 Ctrl+C 退出...")
-    print(f"\n{'原始':^8} | {'平均':^8} | {'百分比':^8} | {'映射':^6} | {'峰值':^6}")
-    print("-" * 46)
+    print(f"\n{'原始':^8} | {'平均':^8} | {'百分比':^8} | {'映射':^6} | {'峰值':^6} | {'校准':^6}")
+    print("-" * 58)
 
     try:
         while True:
@@ -233,13 +343,13 @@ if __name__ == '__main__':
             percent = mic.level_percent
             value = mic.value_int
             peak = "✅" if mic.peak_detected else "❌"
+            calibrated = "✅" if mic.is_calibrated else "❌"
 
-            print(f"{raw:^8} | {avg:^8} | {percent:^8} | {value:^6} | {peak:^6}", end='\r')
+            print(f"{raw:^8} | {avg:^8} | {percent:^8} | {value:^6} | {peak:^6} | {calibrated:^6}", end='\r')
+            time.sleep(0.1)
     except KeyboardInterrupt:
         mic.deinit()
         print("\n\n👋 退出程序")
     except Exception as e:
         mic.deinit()
         print(f"\n\n💥 程序异常: {e}")
-        
-
