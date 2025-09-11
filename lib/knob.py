@@ -38,11 +38,16 @@ class Knob:
         """返回百分比（保留1位小数）"""
         return round((self.read() / self.max_adc) * 100, 1)
 
-    @property
-    def value(self):
-        """返回映射到 min_val ~ max_val 的整数值"""
-        return int((self.read() / self.max_adc) * (self.max_val - self.min_val) + self.min_val)
 
+    @property
+    def value(self):  
+        """返回映射到 min_val ~ max_val 的浮点值"""
+        return (self.read() / self.max_adc) * (self.max_val - self.min_val) + self.min_val
+
+    @property
+    def value_int(self): 
+        """返回映射到 min_val ~ max_val 的整数值"""
+        return int(self.value)
 
 if __name__ == '__main__':
     import time
@@ -66,12 +71,12 @@ if __name__ == '__main__':
     knob = Knob(pin=pin_num, min_val=min_val, max_val=max_val)
 
     print(f"\n✅ 开始读取 (GPIO{pin_num} 并映射至 {min_val}~{max_val})，按 Ctrl+C 退出...")
-    print(f"\n{'原始':^6} | {'百分比':^6} | {'映射值':^6}")
+    print(f"\n{'原始':^6} | {'百分比':^6} | {'映射整数值':^6}")
     print("-" * 20)
 
     while True:
         try:
-            print(f"{knob.read():^6} | {knob.percent:^6} | {knob.value:^6}", end='\r')
+            print(f"{knob.read():^6} | {knob.percent:^6} | {knob.value_int:^6}", end='\r')
             time.sleep(0.1)
         except KeyboardInterrupt:
             print("\n👋 退出程序")

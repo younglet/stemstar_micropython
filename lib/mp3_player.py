@@ -1,7 +1,7 @@
 from machine import UART
 import time
 
-class MP3Player:
+class JR6001:
     def __init__(self, uart):
         self.uart = uart
     
@@ -58,9 +58,9 @@ class MP3Player:
         self._send_command(cmd)
         
 if __name__ == '__main__':                
-    from machine import Uart
+    from machine import UART
     
-    uart  = Uart(2, 115200, tx=Pin(26), rx=Pin(27))
-    mp3_player = MP3Player(uart)
+    uart  = UART(2, 96000, tx=Pin(16), rx=Pin(17))
+    mp3_player = JR6001(uart)
     mp3_player.play()
 

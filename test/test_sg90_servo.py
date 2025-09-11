@@ -24,7 +24,7 @@ try:
 
     for angle in angles:
         print(f"🧭 正在转动到 {angle}°")
-        servo.move(angle)
+        servo.move_to(angle)
         print(f"✅ 已转至 {angle}°")
         time.sleep(2)
     print("🎉 所有测试完成！")

@@ -11,7 +11,7 @@ class SG90:
 
 
     def __init__(self, pin):
-        # 初始化角度为 -0.001，确保第一次调用 move() 时能触发移动
+        # 初始化角度为 -0.001，确保第一次调用 move_to() 时能触发移动
         self.current_angle = -0.001
         # 计算角度到占空比的转换因子
         self.__angle_conversion_factor = (self.__max_u10_duty - self.__min_u10_duty) / (self.max_angle - self.min_angle)
@@ -21,7 +21,7 @@ class SG90:
         self.__motor.freq(self.__servo_pwm_freq)
 
 
-    def move(self, angle):
+    def move_to(self, angle):
         # 将角度保留两位小数，以减少不必要的舵机微调
         angle = round(angle, 2)
         # 是否需要移动？
@@ -62,7 +62,7 @@ if __name__ == '__main__':
 
         for angle in angles:
             print(f"🧭 正在转动到 {angle}°")
-            servo.move(angle)
+            servo.move_to(angle)
             print(f"✅ 已转至 {angle}°")
             time.sleep(2)
         print("🎉 所有测试完成！")

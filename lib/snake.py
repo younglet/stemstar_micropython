@@ -12,7 +12,7 @@ class Block:
     def draw(self, screen):
         screen.fill_rect(self.x * 2, self.y * 2, 2, 2, 1)
 
-    def move(self, direction):
+    def move_to(self, direction):
         return Block(self.x + direction[0], self.y + direction[1], self.is_food)
 
     @staticmethod
@@ -39,7 +39,7 @@ class Snake:
         self.food = Block.generate_food(screen, self.blocks)  # 食物也是 Block，只是 is_food=True
 
     def update(self):
-        head = self.blocks[0].move(self.directions[self.direction % 4])
+        head = self.blocks[0].move_to(self.directions[self.direction % 4])
 
         # 边界检测（考虑边框）
         if not (1 <= head.x < (self.screen.width // 2) - 1 and

@@ -1,3 +1,5 @@
+# buzzer.py
+
 import time
 from machine import Pin, PWM
 
@@ -20,7 +22,8 @@ class Buzzer:
         :param active_high: 高电平触发还是低电平触发，默认高电平触发
         :param is_active_buzzer: 是否是有源蜂鸣器（只需通电即可响）
         """
-        self.pin = pin if isinstance(pin, Pin) else Pin(pin, Pin.OUT)
+        self.pin = pin if isinstance(pin, Pin) else Pin(pin)
+        self.pin.init(Pin.OUT)
         self.active_high = active_high
         self.is_active_buzzer = is_active_buzzer
         self.pwm_obj = None

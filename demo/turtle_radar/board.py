@@ -15,7 +15,7 @@ angle = 10
 step = 5
 
 while True:
-    servo.move(angle)
+    servo.move_to(angle)
 
     time.sleep(0.5)
     distance = sensor.get_distance()
