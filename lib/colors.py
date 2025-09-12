@@ -7,15 +7,21 @@ def _check_qualified_colors(colors):
         raise ValueError("colors 参数必须是一个列表")
     if not colors:
         raise ValueError("colors 列表不能为空")
-    if not all(isinstance(c, (tuple, list)) and len(c) == 3 for c in colors):
-        raise ValueError("colors 列表中的每个元素必须是 (r, g, b) 元组或列表")
     for color in colors:
-        if not all(0 <= comp <= 255 for comp in color):
-            raise ValueError("颜色分量必须在 0~255 范围内")
+        _check_qualified_color(color)
+    return True
+
+def _check_qualified_color(color):
+    if not isinstance(color, (tuple, list)) or len(color) != 3:
+        raise ValueError("颜色必须是一个 (r, g, b) 元组或列表")
+    if not all(isinstance(comp, int) and 0 <= comp <= 255 for comp in color):
+        raise ValueError("颜色分量必须是整数且在 0~255 范围内")
     return True
 
 WHITE = 255, 255, 255    # 白色
 BLACK = 0, 0, 0          # 黑色
+GRAY = 128, 128, 128     # 灰色
+GREY = GRAY              # 英式拼写别名
 RED = 255, 0, 0          # 红色
 ORANGE = 255, 165, 0     # 橙色
 YELLOW = 255, 255, 0     # 黄色
@@ -24,24 +30,23 @@ CYAN = 0, 255, 255       # 青色
 BLUE = 0, 0, 255         # 蓝色
 PURPLE = 128, 0, 128     # 紫色
 PINK = 255, 105, 180     # 柔和粉
-BROWN = 139, 69, 19      # 棕色
-
 MAGENTA = 255, 0, 255    # 品红色
-MAROON = 128, 0, 0       # 栗色
-OLIVE = 128, 128, 0      # 橄榄色
 LIME = 0, 255, 0         # 酸橙色      
 TEAL = 0, 128, 128       # 水鸭色 
+INDIGO = 99, 102, 241    # 靛蓝色
+VIOLET = 139, 92, 246    # 紫罗兰色
+FUCHSIA = 236, 72, 153   # 芙蓉色
+ROSE =  244, 63, 94      # 玫瑰红
+BROWN = 139, 69, 19      # 棕色
+MAROON = 128, 0, 0       # 栗色
 NAVY = 0, 0, 128         # 海军蓝
+OLIVE = 128, 128, 0      # 橄榄色
 
-GRAY = 128, 128, 128     # 灰色
-GREY = GRAY              # 英式拼写别名
 
 # 包含所有颜色变量的列表
 COLORS = [
-    WHITE, BLACK, RED, ORANGE, YELLOW,
-    GREEN, CYAN, BLUE, PURPLE, MAGENTA,
-    MAROON, OLIVE, LIME, TEAL, NAVY,
-    PINK, BROWN, GRAY
+    WHITE, BLACK, GRAY, RED, ORANGE, YELLOW, GREEN, CYAN, BLUE, PURPLE,
+    PINK, MAGENTA, LIME, TEAL, INDIGO, VIOLET, FUCHSIA, ROSE, BROWN, MAROON, NAVY, OLIVE
 ]
 
 # 彩虹颜色
@@ -49,6 +54,20 @@ RAINBOW = [RED, ORANGE, YELLOW, GREEN, CYAN, BLUE, PURPLE]
 
 # 冷到暖渐变（适合音量条等）
 VOLUME_BAR = [BLUE, CYAN, TEAL, GREEN, LIME, YELLOW, ORANGE, RED]
+
+
+def is_qualified_color(color):
+    """
+    检查输入是否为合法的颜色格式 (r, g, b)，各分量范围 0~255。
+    
+    :param color: 输入颜色，期望格式为 (r, g, b)
+    :return: 如果是合法颜色返回 True，否则抛出 ValueError
+    """
+    try:
+        _check_qualified_color(color)
+        return True
+    except:
+        return False
 
 
 def generate_random_color():
@@ -213,3 +232,58 @@ def map_value_to_color(value, value_min, value_max, gradient_colors):
     color_index = int(ratio * (len(gradient_colors) - 1))
 
     return gradient_colors[color_index]
+
+
+def dim_color(color, factor=0.9):
+    """
+    按照给定的因子调整颜色的亮度。
+    
+    :param color: 输入颜色，格式为 (r, g, b)，各分量范围 0~255
+    :param factor: 亮度调整因子，范围 0.0~1.0。1.0 表示不变，0.0 表示黑色。
+    :return: 调整后的颜色，格式为 (r, g, b)
+    """
+    _check_qualified_color(color)
+    if not (0.0 <= factor <= 1.0):
+        raise ValueError("factor 参数必须在 0.0 到 1.0 范围内")
+    
+    r = int(color[0] * factor)
+    g = int(color[1] * factor)
+    b = int(color[2] * factor)
+    
+    return (r, g, b)
+
+def brighten_color(color, factor=0.9):
+    """
+    按照给定的因子调整颜色的亮度。
+    
+    :param color: 输入颜色，格式为 (r, g, b)，各分量范围 0~255
+    :param factor: 亮度调整因子，范围 0.0~1.0。1.0 表示不变，0.0 表示白色。
+    :return: 调整后的颜色，格式为 (r, g, b)
+    """
+    _check_qualified_color(color)
+    if not (0.0 <= factor <= 1.0):
+        raise ValueError("factor 参数必须在 0.0 到 1.0 范围内")
+    
+    r = int(color[0] + (255 - color[0]) * (1 - factor))
+    g = int(color[1] + (255 - color[1]) * (1 - factor))
+    b = int(color[2] + (255 - color[2]) * (1 - factor))
+    
+    return (r, g, b)
+
+def scale_color(color, scale):
+    """
+    按照给定的比例缩放颜色的亮度。
+    
+    :param color: 输入颜色，格式为 (r, g, b)，各分量范围 0~255
+    :param scale: 亮度缩放比例，大于1表示变亮，小于1表示变暗
+    :return: 调整后的颜色，格式为 (r, g, b)
+    """
+    _check_qualified_color(color)
+    if scale < 0:
+        raise ValueError("scale 参数必须是非负数")
+    
+    r = min(int(color[0] * scale), 255)
+    g = min(int(color[1] * scale), 255)
+    b = min(int(color[2] * scale), 255)
+    
+    return (r, g, b)
