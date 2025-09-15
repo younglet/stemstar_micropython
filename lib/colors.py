@@ -181,7 +181,7 @@ def generate_rainbow_colors(n):
 
     return colors
 
-def offset_colors(colors, steps):
+def offset_colors(colors, steps=1):
     """
     对输入的颜色列表进行偏移操作，并返回新的颜色列表。
     
