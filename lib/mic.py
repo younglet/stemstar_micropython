@@ -16,19 +16,19 @@ class Microphone:
       - 支持自动校准环境噪声基线
     """
 
-    def __init__(self, pin, min_val=0, max_val=100, adc_bits=12, sample_count=50, 
-                 use_timer=True, timer_id=0, freq=50, peak_threshold=0.15):
+    def __init__(self, pin, min_val=0, max_val=100, peak_threshold=0.15, 
+                adc_bits=12, sample_count=50, use_timer=True, timer_id=0, freq=50):
         """
         初始化麦克风
         :param pin: 引脚号(int) 或 Pin 对象
         :param min_val: 映射最小值
         :param max_val: 映射最大值
+        :param peak_threshold: 峰值检测阈值（相对于最大ADC值的比例）
         :param adc_bits: ADC 位数（默认 12）
         :param sample_count: 采样数量（滑动窗口大小）
         :param use_timer: 是否启用后台定时器（默认 True）
         :param timer_id: 定时器 ID（建议 0~3）
         :param freq: 定时更新频率（Hz，默认 50）
-        :param peak_threshold: 峰值检测阈值（相对于最大ADC值的比例）
         """
         # 处理 pin 参数
         if isinstance(pin, int):
@@ -194,7 +194,7 @@ class Microphone:
             return total // self.sample_count
 
     @property
-    def level_percent(self):
+    def percent(self):
         """返回百分比（0.0 ~ 100.0）"""
         avg = self.read()
         return round((avg / self.max_adc) * 100, 1)
@@ -210,7 +210,6 @@ class Microphone:
         """映射后的整数值"""
         return int(self.value)
 
-    @property
     def peak_detected(self):
         """
         检测是否发生显著声音脉冲
@@ -340,9 +339,9 @@ if __name__ == '__main__':
         while True:
             raw = mic.read_raw()
             avg = mic.read()
-            percent = mic.level_percent
-            value = mic.value_int
-            peak = "✅" if mic.peak_detected else "❌"
+            percent = mic.percent
+            value = mic.value
+            peak = "✅" if mic.peak_detected() else "❌"
             calibrated = "✅" if mic.is_calibrated else "❌"
 
             print(f"{raw:^8} | {avg:^8} | {percent:^8} | {value:^6} | {peak:^6} | {calibrated:^6}", end='\r')
