@@ -4,10 +4,10 @@ import turtle
 
 
 # 海龟画图配置
-screen = turtle.Screen()
-screen.setup(width=800, height=600, bgcolor='black')
-turtle.speed(0)
-turtle.pensize(5)
+screen = turtle.Screen()                               # 创建画布
+screen.setup(width=800, height=600, bgcolor='black')   # 设置画布大小和背景色
+turtle.speed(0)                                        # 画笔速度最快
+turtle.pensize(5)                                      # 画笔粗细
 
 def emit_line(angle, distance, scale=10):
     """
@@ -23,16 +23,16 @@ def emit_line(angle, distance, scale=10):
     turtle.setheading(angle)        # 画笔朝向当前角度
 
     turtle.pendown()                # 画笔落下
-    turtle.pencolor('green')         # 画笔颜色为蓝色
+    turtle.pencolor('green')        # 画笔颜色为蓝色
     turtle.forward(distance*scale)  # 画笔向前移动，线段长度为距离*缩放比例
     turtle.pencolor('red')          # 画笔颜色为红色
     turtle.forward(1000)            # 确保线段能铺满画布
 
 
 # 配置串口参数
-SERIAL_PORT = '/dev/cu.wchusbserial14220'        
-BAUD_RATE = 115200
-TIMEOUT = 1 
+SERIAL_PORT = '/dev/cu.wchusbserial14220'      # 根据实际情况修改为你的串口号   
+BAUD_RATE = 115200                             # 波特率，固定为115200
+TIMEOUT = 1                                    # 读超时设置，单位秒
 
 # 打开串口，如果打不开此步会运行报错，请检查串口参数
 ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=TIMEOUT)
