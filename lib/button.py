@@ -9,15 +9,16 @@ class Button:
         初始化按钮对象
         :param pin: 已经配置好的 Pin 实例（输入模式）
         """
-                
+        
         if isinstance(pin, int):
             self.pin = Pin(pin)
         else:
-            pin = pin.init(Pin.IN, Pin.PULL_DOWN)
+            if not isinstance(pin, Pin):
+                raise TypeError("pin 必须是整数或 machine.Pin 实例")
             self.pin = pin
-        
-        self.pin = Pin(pin, Pin.IN, Pin.PULL_DOWN)
+        self.pin.init(mode=Pin.IN, pull=Pin.PULL_DOWN)
         self.last_state = self.pin.value()
+        self.pin = Pin(pin, Pin.IN, Pin.PULL_DOWN)
         self.debounce_delay = debounce_delay
         self.last_debounce_time = time.ticks_ms()
         self.state = self.last_state
@@ -65,53 +66,55 @@ class Button:
         return False
 
 
+    @classmethod
+    def test(cls):
+        print('【按钮测试程序】')
+
+
+        try:
+            pin_num = int(input("请输入按钮的引脚号（如 4）: ") or "4")
+        except:
+            print("❌ 输入无效，默认使用 GPIO4")
+            pin_num = 4
+
+
+        try:
+            print(f"🚩 开始测试按钮(Pin{pin_num})功能...")
+
+            print("🔧 正在初始化按钮...")
+            btn = Button(Pin(pin_num)) 
+
+            # ===== 测试 is_pressed() =====
+            print("\n🔘 正在测试 is_pressed()（持续5秒）...")
+            start_time = time.ticks_ms()
+            while time.ticks_diff(time.ticks_ms(), start_time) < 5000:
+                if btn.is_pressed():
+                    print("🔵 按钮被按下", end='\r')
+                else:
+                    print("⚪ 按钮未按下", end='\r')
+                time.sleep_ms(50)
+            print("\n✅ is_pressed() 测试完成")
+
+
+            # ===== 测试 is_clicked() =====
+            print("\n🔘 正在测试 is_clicked()（持续10秒）...")
+            print("👉 请在这段时间内尝试多次按下并松开按钮以测试点击检测\n")
+            start_time = time.ticks_ms()
+            click_count = 0
+            while time.ticks_diff(time.ticks_ms(), start_time) < 10000:
+                if btn.is_clicked():
+                    click_count += 1
+                    print(f"👇 检测到一次完整点击！（第 {click_count} 次）")
+                time.sleep_ms(50)
+            print("✅ is_clicked() 测试完成")
+
+            print("\n🔚 所有测试已完成！")
+
+        except KeyboardInterrupt:
+            print("\n程序已退出")
+        except Exception as e:
+            print("发生错误：", e)
+
+
 if __name__ == "__main__":
-    from machine import Pin
-    import time
-
-    print('''
-【按钮测试程序】
-──────────────────────────────────────────────
-【按钮】   ->  GPIO2 （请按下按钮）
-──────────────────────────────────────────────
-请按照如上接线说明进行接线，然后回车继续：''')
-
-    input()  # 等待用户确认接线完成并回车继续
-
-    try:
-        print("🚩 开始测试按钮功能...")
-
-        print("🔧 正在初始化按钮...")
-        btn_pin = Pin(2, Pin.IN, Pin.PULL_DOWN)
-        btn = Button(btn_pin)
-
-        # ===== 测试 is_pressed() =====
-        print("\n🔘 正在测试 is_pressed()（持续5秒）...")
-        start_time = time.ticks_ms()
-        while time.ticks_diff(time.ticks_ms(), start_time) < 5000:
-            if btn.is_pressed():
-                print("🔵 按钮被按下", end='\r')
-            else:
-                print("⚪ 按钮未按下", end='\r')
-            time.sleep_ms(50)
-        print("\n✅ is_pressed() 测试完成")
-
-
-        # ===== 测试 is_clicked() =====
-        print("\n🔘 正在测试 is_clicked()（持续10秒）...")
-        print("👉 请在这段时间内尝试多次按下并松开按钮以测试点击检测\n")
-        start_time = time.ticks_ms()
-        click_count = 0
-        while time.ticks_diff(time.ticks_ms(), start_time) < 10000:
-            if btn.is_clicked():
-                click_count += 1
-                print(f"👇 检测到一次完整点击！（第 {click_count} 次）")
-            time.sleep_ms(50)
-        print("✅ is_clicked() 测试完成")
-
-        print("\n🔚 所有测试已完成！")
-
-    except KeyboardInterrupt:
-        print("\n程序已退出")
-    except Exception as e:
-        print("发生错误：", e)
+    Button.test()
