@@ -1,5 +1,6 @@
 # knob.py
 from machine import ADC, Pin
+import time
 
 class Knob:
     """
@@ -48,36 +49,44 @@ class Knob:
     def value_int(self): 
         """返回映射到 min_val ~ max_val 的整数值"""
         return int(self.value)
+    
+    @classmethod
+    def test(cls):
+        print('【旋钮测试程序】')
 
-if __name__ == '__main__':
-    import time
 
-    print("🔧 旋钮测试程序（支持 int 或 Pin 对象）")
-
-    try:
-        pin_num = int(input("请输入 ADC 引脚号（如 4）: "))
-    except:
-        print("❌ 输入无效，默认使用 GPIO4")
-        pin_num = 4
-
-    try:
-        min_val = int(input("最小映射值 (默认 0): ") or "0")
-        max_val = int(input("最大映射值 (默认 100): ") or "100")
-    except:
-        print("❌ 输入无效，使用默认范围 0~100")
-        min_val, max_val = 0, 100
-
-    # 创建 Knob（传入 int 引脚号）
-    knob = Knob(pin=pin_num, min_val=min_val, max_val=max_val)
-
-    print(f"\n✅ 开始读取 (GPIO{pin_num} 并映射至 {min_val}~{max_val})，按 Ctrl+C 退出...")
-    print(f"\n{'原始':^6} | {'百分比':^6} | {'映射整数值':^6}")
-    print("-" * 20)
-
-    while True:
         try:
-            print(f"{knob.read():^6} | {knob.percent:^6} | {knob.value_int:^6}", end='\r')
-            time.sleep(0.1)
-        except KeyboardInterrupt:
-            print("\n👋 退出程序")
-            break
+            pin_num = int(input("请输入 ADC 引脚号（推荐使用GPIO32-39，如 34）: "))
+        except:
+            print("❌ 输入无效，默认使用 GPIO34")
+            pin_num = 34
+
+        try:
+            min_val = int(input("最小映射值 (默认 0): ") or "0")
+            max_val = int(input("最大映射值 (默认 100): ") or "100")
+        except:
+            print("❌ 输入无效，使用默认范围 0~100")
+            min_val, max_val = 0, 100
+
+        # 创建 Knob（传入 int 引脚号）
+        print(f"🚩 开始测试 旋钮(GPIO{pin_num}) 功能...")
+        time.sleep(1)
+
+        print("🔧 正在初始化旋钮...")
+        knob = cls(pin=pin_num, min_val=min_val, max_val=max_val)
+
+        print(f"\n✅ 开始读取 旋钮(GPIO{pin_num}) 并映射至 {min_val}~{max_val})，按 Ctrl+C 退出...")
+        print(f"\n{'原始':^6} | {'百分比':^6} | {'映射整数值':^6}")
+        print("-" * 20)
+
+        while True:
+            try:
+                print(f"{knob.read():^6} | {knob.percent:^6} | {knob.value_int:^6}", end='\r')
+                time.sleep(0.1)
+            except KeyboardInterrupt:
+                print("\n👋 退出程序")
+                break
+
+
+if __name__ == "__main__":
+    Knob.test()
