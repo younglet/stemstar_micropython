@@ -79,7 +79,8 @@ class Button:
 
 
         try:
-            print(f"🚩 开始测试按钮(Pin{pin_num})功能...")
+            print(f"🚩 开始测试按钮(GPIO{pin_num})功能...")
+            time.sleep(1)
 
             print("🔧 正在初始化按钮...")
             btn = Button(Pin(pin_num)) 

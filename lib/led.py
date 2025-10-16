@@ -208,7 +208,8 @@ class LED:
             pin_num = 4
         
         try:
-            print("🚩 开始测试 LED(Pin{pin_num}) 功能...")
+            print(f"🚩 开始测试 LED(GPIO{pin_num}) 功能...")
+            time.sleep(1)
 
             print("🔧 正在初始化LED...")
             led = cls(pin_num)  
