@@ -208,7 +208,7 @@ class LED:
             pin_num = 4
         
         try:
-            print("🚩 开始测试 LED 功能...")
+            print("🚩 开始测试 LED(Pin{pin_num}) 功能...")
 
             print("🔧 正在初始化LED...")
             led = cls(pin_num)  
