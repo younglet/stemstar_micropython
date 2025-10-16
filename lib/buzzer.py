@@ -101,61 +101,77 @@ class Buzzer:
         else:
             print("⚠️ 无法设置音调：当前是有源蜂鸣器")
 
+    def __del__(self):
+        self.deinit()
 
-# =============================
-# 测试程序部分
-# =============================
-if __name__ == "__main__":
-    from machine import Pin
-    import time
+    def deinit(self):
+        """释放蜂鸣器占用的资源"""
+        if not self.is_active_buzzer and self.pwm_obj:
+            self.off()  # 先关闭
+            self.pwm_obj.deinit()  # 释放 PWM 资源
+            self.pwm_obj = None
+        self.pin.value(0 if self.active_high else 1)  # 确保引脚低电平
 
-    print('''
-【蜂鸣器测试程序】
-──────────────────────────────────────────────
-【Buzzer】 ->  GPIO4 （输出引脚）
-──────────────────────────────────────────────
-请按照如上接线说明进行接线，并选择蜂鸣器类型（默认为无源）：
-1 - 有源蜂鸣器
-2 - 无源蜂鸣器（默认）
-然后回车继续：''')
+    @classmethod
+    def test(cls):
+        print("【无源蜂鸣器测试程序】")
+        try:
+            pin_num = int(input("请输入蜂鸣器的引脚号（如 4）: ") or "4")
+        except:
+            print("❌ 输入无效，默认使用 GPIO4")
+            pin_num = 4
 
-    buzzer_type = input().strip()
-    is_active_buzzer = True if buzzer_type == "1" else False
+        try:
+            buzzer_type = input("请选择蜂鸣器类型（1-有源，2-无源，默认1）: ") or "1"
+        except:
+            print("❌ 输入无效，默认使用有源蜂鸣器")
+            buzzer_type = "1"
 
-    try:
-        print("🚩 开始测试蜂鸣器功能...")
+        is_active_buzzer = True if buzzer_type == "1" else False
+        
+        try:
+            print(f"🚩 开始测试蜂鸣器(GPIO{pin_num})功能...")
+            time.sleep(1)
 
-        print("🔧 正在初始化蜂鸣器...")
-        buzzer = Buzzer(Pin(4), is_active_buzzer=is_active_buzzer)  # 根据用户选择初始化
+            print("🔧 正在初始化蜂鸣器...")
+            buzzer = cls(Pin(pin_num), is_active_buzzer=is_active_buzzer)  # 根据用户选择初始化
 
-        print("🔊 正在发出一次短促蜂鸣")
-        buzzer.beep(times=1, duration=0.3)
-        time.sleep(1)
+            print("🔊 正在发出一次短促蜂鸣")
+            buzzer.beep(times=1, duration=0.3)
+            time.sleep(1)
 
-        print("🔊 正在连续蜂鸣三次")
-        buzzer.beep(times=3, duration=0.2, interval=0.1)
-        time.sleep(1)
+            print("🔊 正在连续蜂鸣三次")
+            buzzer.beep(times=3, duration=0.2, interval=0.1)
+            time.sleep(1)
 
-        if not is_active_buzzer:
+            if not is_active_buzzer:
 
-            print("🎼 正在播放一段旋律:《兰亭序》")
-            melody = [
-                'G4', 'A4', 'C5', 'D5', '', '', 'C5', 'D5', 'C5', 'E5', 'D5', 'C5', '', '',
-                'C5', 'D5', 'E5', 'G5', '', '', 'E5', 'D5', 'C5', 'A4', 'G4', 'E5', '', '',
-                'E5', 'G5', 'A5', 'E5', '', '', 'D5', 'D5', 'C5', 'E5', 'D5', 'C5', '', '',
-                'A4', 'C5', 'E5', 'D5', '', '', 'C5', 'A4', 'G4', 'E5', 'D5', 'C5', '', '',
-            ]
-            for note in melody:
-                print(f"🎵 正在播放 {note}")
-                buzzer.play_note(note=note, duration=0.2)
-                
+                print("🎼 正在播放一段旋律:《兰亭序》")
+                melody = [
+                    'G4', 'A4', 'C5', 'D5', '', '', 'C5', 'D5', 'C5', 'E5', 'D5', 'C5', '', '',
+                    'C5', 'D5', 'E5', 'G5', '', '', 'E5', 'D5', 'C5', 'A4', 'G4', 'E5', '', '',
+                    'E5', 'G5', 'A5', 'E5', '', '', 'D5', 'D5', 'C5', 'E5', 'D5', 'C5', '', '',
+                    'A4', 'C5', 'E5', 'D5', '', '', 'C5', 'A4', 'G4', 'E5', 'D5', 'C5', '', '',
+                ]
+                for note in melody:
+                    print(f"🎵 正在播放 {note}")
+                    buzzer.play_note(note=note, duration=0.2)
+                    
 
-            print("🎉 所有测试完成！")
-        else:
-            print("注意：由于使用的是有源蜂鸣器，不能通过play_note方法播放不同音调")
-    except KeyboardInterrupt:
-        print("程序已退出")
-    except Exception as e:
-        print("发生错误：", e)
-    finally:
-        buzzer.off()
+                print("🎉 所有测试完成！")
+            else:
+                print("注意：由于使用的是有源蜂鸣器，不能通过play_note方法播放不同音调")
+        except KeyboardInterrupt:
+            print("程序已退出")
+        except Exception as e:
+            print("发生错误：", e)
+        finally:
+            buzzer.off()
+            buzzer.deinit()
+            print("资源已释放")
+    
+
+
+
+if __name__ == '__main__':
+    Buzzer.test()
