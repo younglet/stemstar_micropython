@@ -15,7 +15,8 @@ class SG90:
         """
         # 处理引脚输入：支持整数或 Pin 对象
         if isinstance(pin, int):
-            self.pin = Pin(pin, Pin.OUT)
+            self.pin = pin  # 直接保存编号，交给 PWM 处理
+            self.__motor = PWM(Pin(pin), freq=self.__servo_pwm_freq, duty=0)
         elif isinstance(pin, Pin):
             pin.init(mode=Pin.OUT)
             self.pin = pin
@@ -88,22 +89,30 @@ class SG90:
         except:
             print("❌ 输入无效，默认使用 GPIO4")
             pin_num = 4
+        
+        servo = None
         try:
             print(f"🚩 开始 SG90 舵机(GPIO{pin_num}) 功能测试...")
             import time
 
             print("🔧 正在初始化舵机...")
-            servo = cls(pin_num)  # 初始化舵机引脚
+            servo = cls(Pin(pin_num))  # 初始化舵机引脚
 
-            angles = [0, 30, 60, 90, 120, 150, 180, 90, 0]
+            angles = [
+                (  0,  "⬅️"), 
+                ( 45,  "↖️"), 
+                ( 90,  "⬆️"), 
+                (135,  "↗️"), 
+                (180,  "➡️"), 
+            ]
 
             print("🔄 开始测试舵机角度旋转")
             print("📌 按 Ctrl+C 可随时退出程序\n")
 
-            for angle in angles:
+            for angle, emoji in angles:
                 print(f"🧭 正在转动到 {angle}°")
                 servo.move_to(angle)
-                print(f"✅ 已转至 {angle}°")
+                print(f"{emoji} 已转至 {angle}°")
                 time.sleep(2)
 
             print("🛑 测试完成，正在释放舵机扭矩...")
@@ -114,6 +123,33 @@ class SG90:
             servo.deinit()
             print("🎉 测试结束！")
 
+    @staticmethod
+    def help():
+        print("""
+【SG90 舵机驱动类】
+--------------------
+[硬件参数]:
+    - PWM 频率: 50Hz (周期 20ms)
+    - 最小脉宽: 0.5ms (对应 0°)
+    - 最大脉宽: 2.5ms (对应 180°)
+    - 默认角度范围: 0° 到 180° (若硬件支持，可通过修改 min_angle 和 max_angle 属性调整)
+--------------------
+[初始化]:
+    servo = SG90(pin)     # pin: machine.Pin 对实例
+[属性]:
+    angle: 当前目标角度（可读写，设置时会自动转动舵机）  
+[方法]:
+    move_to(angle)        # 将舵机转动到指定角度
+    deinit()              # 停止 PWM 信号输出，使舵机释放扭矩
+--------------------
+[示例]:
+    servo = SG90(4)       # 初始化舵机，信号线连接到 GPIO4
+    servo.move_to(90)     # 转动到 90°
+    servo.angle = 45      # 也可以通过属性设置角度，转动到 45°
+    print(servo.angle)    # 读取当前目标角度
+    servo.deinit()        # 停止 PWM，释放舵机扭矩
+--------------------
+""")
 
 if __name__ == "__main__":
     SG90.test()
