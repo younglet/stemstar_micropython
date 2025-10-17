@@ -231,7 +231,7 @@ class SSD1306_I2C(SSD1306):
             time.sleep(1)
 
             print("🔧 正在初始化 OLED 屏幕...")
-            i2c = I2C(1, scl=Pin(scl_num), sda=Pin(sda_num), freq=115200)
+            i2c = I2C(1, scl=Pin(sda_num), sda=Pin(scl_num), freq=115200)
             screen = cls(128, 64, i2c)
             SSD1306.test(screen)
         except Exception as e:
