@@ -295,6 +295,41 @@ class LED:
             print("\n程序已退出")
         except Exception as e:
             print("发生错误：", e)
+    
+    @staticmethod
+    def help():
+        print("""
+【LED 驱动类】
+--------------------
+[硬件参数]:
+    - 亮度范围: 0 (关闭) 到 1023 (最亮)
+--------------------
+[初始化]:
+    led = LED(pin)        # pin: machine.Pin 对象
+[属性]:
+    brightness: 当前亮度（可读写，范围 0~1023）
+    is_on: 当前是否开启（只读）
+[方法]:
+    on()                  # 打开 LED 至当前亮度
+    off()                 # 关闭 LED
+    switch()              # 切换 LED 状态
+    set_brightness(value) # 设置亮度 (0~1023)
+    brighter(step=100)    # 增加亮度
+    darker(step=100)      # 降低亮度
+    blink(times=1, interval=500)  # 闪烁指定次数
+    fade_to(target_brightness=1023, steps=50, interval=40)  # 渐变到指定亮度
+    fade_on(steps=50, interval=40)   # 平滑打开 LED
+    fade_off(steps=50, interval=40)  # 平滑关闭 LED
+    breathe(steps=50, interval=20)   # 呼吸灯效果
+--------------------
+[示例]:
+    led = LED(4)          # 初始化 LED，连接到 GPIO4
+    led.brightness = 800  # 设置亮度为 800
+    led.on()              # 打开 LED
+    time.sleep(2)         # 等待 2 秒
+    led.fade_off()        # 平滑关闭 LED
+--------------------
+""")
 
 
 if __name__ == '__main__':

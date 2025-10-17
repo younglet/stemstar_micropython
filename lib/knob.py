@@ -86,6 +86,40 @@ class Knob:
             except KeyboardInterrupt:
                 print("\n👋 退出程序")
                 break
+    
+    @staticmethod
+    def help():
+        print("""
+【旋钮（电位器）驱动类】
+--------------------
+[硬件参数]:
+    - 支持 ADC 读取
+    - 支持映射至自定义范围（min_val ~ max_val）
+    - 支持百分比读取
+--------------------
+[初始化]:
+    Knob(pin, min_val=0, max_val=100, adc_bits=12)
+        - pin: machine.Pin 实例
+        - min_val: 映射的最小值（默认 0）
+        - max_val: 映射的最大值（默认 100）
+        - adc_bits: ADC 分辨率位数（默认 12 位）
+[属性]:
+    read: 读取原始 ADC 值
+    percent: 返回百分比（0~100，保留1位小数）
+    value: 返回映射到 min_val ~ max_val 的浮点值
+    value_int: 返回映射到 min_val ~ max_val 的整数值
+--------------------
+[示例]:
+    knob = Knob(pin=34, min_val=0, max_val=100)  # 初始化旋钮，连接到 GPIO34，映射范围 0~100
+    while True:
+        print("原始 ADC 值:", knob.read())
+        print("百分比:", knob.percent)
+        print("映射浮点值:", knob.value)
+        print("映射整数值:", knob.value_int)
+        time.sleep_ms(500)
+--------------------
+
+""")
 
 
 if __name__ == "__main__":

@@ -141,6 +141,48 @@ class SSD1306(framebuf.FrameBuffer):
         screen.fill(0)
         screen.show()
         print("🎉 所有测试完成！")
+    
+    @staticmethod
+    def help():
+        print("""
+【SSD1306 OLED 屏幕驱动类】
+--------------------
+[硬件参数]:
+    - 支持 I2C 和 SPI 接口
+    - 支持显示基本图形和文字
+--------------------
+[初始化]:
+    - SSD1306_I2C(width, height, i2c)
+    - SSD1306_SPI(width, height, spi, dc, res, cs)
+[属性]:
+    - width: 屏幕宽度（像素）
+    - height: 屏幕高度（像素）
+    - buffer: 显示缓冲区（bytearray）
+
+[方法]:
+    - poweron(): 打开显示屏
+    - poweroff(): 关闭显示屏
+    - contrast(contrast): 设置对比度 (0-255)
+    - invert(invert): 反转显示 (True/False)
+    - rotate(rotate): 旋转显示 (0/1)
+    - show(): 刷新显示内容
+    - fill(color): 用指定颜色填充屏幕 (0/1)
+    - pixel(x, y, color): 设置单个像素点颜色 (0/1)
+    - line(x1, y1, x2, y2, color): 画线 (0/1)
+    - rect(x, y, w, h, color): 画矩形 (0/1)
+    - fill_rect(x, y, w, h, color): 画填充矩形 (0/1)
+    - circle(x, y, r, color): 画圆 (0/1)
+    - fill_circle(x, y, r, color): 画填充圆 (0/1)
+    - text(string, x, y, color): 显示文字 (0/1)
+--------------------
+[示例]:
+    i2c = I2C(1, scl=Pin(22), sda=Pin(21))
+    oled = SSD1306_I2C(128, 64, i2c)
+    oled.text("Hello, Stemstar!", 0, 0)
+    oled.rect(0, 16, 128, 32, 1)
+    oled.fill_circle(64, 48, 10, 1)
+    oled.show() 
+""")
 
             
 
