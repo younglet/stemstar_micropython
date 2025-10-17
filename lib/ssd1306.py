@@ -160,28 +160,46 @@ class SSD1306(framebuf.FrameBuffer):
     - buffer: 显示缓冲区（bytearray）
 
 [方法]:
-    - poweron(): 打开显示屏
-    - poweroff(): 关闭显示屏
-    - contrast(contrast): 设置对比度 (0-255)
-    - invert(invert): 反转显示 (True/False)
-    - rotate(rotate): 旋转显示 (0/1)
-    - show(): 刷新显示内容
-    - fill(color): 用指定颜色填充屏幕 (0/1)
-    - pixel(x, y, color): 设置单个像素点颜色 (0/1)
-    - line(x1, y1, x2, y2, color): 画线 (0/1)
-    - rect(x, y, w, h, color): 画矩形 (0/1)
-    - fill_rect(x, y, w, h, color): 画填充矩形 (0/1)
-    - circle(x, y, r, color): 画圆 (0/1)
-    - fill_circle(x, y, r, color): 画填充圆 (0/1)
-    - text(string, x, y, color): 显示文字 (0/1)
+    - poweron()                     # 打开 OLED 电源
+    - poweroff()                    # 关闭 OLED 电源（省电）
+    - contrast(value)               # 设置对比度（0~255，值越大越亮）
+    - invert(True/False)            # 反色显示（True=黑底白字）
+    - rotate(0/1)                   # 旋转 180°（1 表示启用旋转）
+    - show()                        # 必须调用**，将缓冲区内容刷新到屏幕
+    - show()                        # 刷新显示内容
+    - fill(color)                   # 用指定颜色填充屏幕 (0/1)
+    - pixel(x, y, color)            # 设置单个像素点颜色 (0/1)
+    - line(x1, y1, x2, y2, color)   # 画线 (0/1)
+    - rect(x, y, w, h, color)       # 画矩形 (0/1)
+    - fill_rect(x, y, w, h, color)  # 画填充矩形 (0/1)
+    - circle(x, y, r, color)        # 画圆 (0/1)
+    - fill_circle(x, y, r, color)   # 画填充圆 (0/1)
+    - text(string, x, y, color)     # 显示文字 (0/1)
+
+    - fill(color)                   # 全屏填充（0=黑，1=白）
+    - text(string, x, y, color)     # 显示 ASCII 文字（默认 8×8 字体）
+    - pixel(x, y, color)            # 设置单个像素
+    - line(x1, y1, x2, y2, color)   # 画直线
+    - hline(x, y, w, color)         # 画水平线（高效）
+    - vline(x, y, h, color)         # 画垂直线（高效）
+    - rect(x, y, w, h, color)       # 画空心矩形
+    - fill_rect(x, y, w, h, color)  # 画实心矩形（常用于局部擦除）
+    - scroll(dx, dy)                # 滚动整个屏幕内容（注意：易产生重影）
+    - ellipse(xc, yc, a, b, color)  # 画椭圆（a=x半轴, b=y半轴）
+
 --------------------
 [示例]:
-    i2c = I2C(1, scl=Pin(22), sda=Pin(21))
+    from machine import I2C, Pin
+    from ssd1306 import SSD1306_I2C
+
+    i2c = I2C(scl=Pin(21), sda=Pin(22))
     oled = SSD1306_I2C(128, 64, i2c)
+
+    oled.fill(0)
     oled.text("Hello, Stemstar!", 0, 0)
     oled.rect(0, 16, 128, 32, 1)
-    oled.fill_circle(64, 48, 10, 1)
-    oled.show() 
+    oled.ellipse(64, 48, 20, 10, 1)
+    oled.show()
 """)
 
             
