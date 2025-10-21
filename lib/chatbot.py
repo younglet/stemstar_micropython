@@ -89,19 +89,61 @@ class ChatBot:
         prompt = escape_unicode(prompt) # 针对micropython的json模块兼容性的特殊处理
         self.messages = [{"role": "system", "content": prompt}]
         print(f"{self.bot_avatar}: 已成功修提示词。")
+    
+    @classmethod
+    def test(cls):
+        print("【聊天机器人测试程序】")
+        print("请确保已连接到互联网，并准备好 DeepSeek API Key。")
+        api_key = input("请输入 DeepSeek API Key（如 sk-xxxxxx）: ").strip()
+        if not api_key:
+            print("❌ API Key 不能为空，测试终止。")
+            return
+        
+        bot = cls(api_key=api_key)
+        if not bot.is_valid:
+            print("❌ API Key 无效或网络连接失败，测试终止。")
+            return
+        
+        print("💬 请输入 'exit' 退出测试。")
+        while True:
+            user_input = input("你: ").strip()
+            if user_input.lower() == 'exit':
+                print("👋 测试结束，感谢使用！")
+                break
+            bot.chat(user_input)
+    
+    @staticmethod
+    def help(self):
+        print(""""
+【聊天机器人类 ChatBot】
+--------------------
+[功能]:
+    - 基于 DeepSeek API 实现的聊天机器人
+    - 支持自定义提示词和多轮对话
 
+[初始化]:
+    bot = ChatBot(api_key, prompt, ready_message, bot_avatar, user_avatar)
+    # api_key       : DeepSeek API Key（必需）
+    # prompt        : 聊天提示词，默认为 "reply in Chinese, within 20 words"
+    # ready_message : 机器人就绪提示语，默认为 "我准备好了， 一起来聊天吧！"
+    # bot_avatar    : 机器人头像符号，默认为 '🤖'
+    # user_avatar   : 用户头像符号，默认为 '🤔'
+[方法]:
+    chat(message)      → 发送消息并获取回复
+    reset()            → 重置聊天记录和提示词
+    set_prompt(prompt) → 设置新的提示词
+    validate()        → 验证 API Key 是否有效
+--------------------
+[使用示例]:
+    from chatbot import ChatBot
+
+    bot = ChatBot(api_key="sk-xxxxxx")
+    bot.chat("你好，介绍一下你自己。")
+    bot.set_prompt("You are a helpful assistant.")
+    bot.reset()
+    bot.chat("Tell me a joke.")
+--------------------
+""")
 
 if __name__ == "__main__":
-    from connect_wifi import connect_wifi
-    
-    
-    connect_wifi()
-    
-    bot  = ChatBot()
-    bot.chat("你好")
-    
-    bot.set_prompt("你是一个刁蛮小辣椒，怼天怼地对空气。")
-    bot.chat("你好")
-
-    bot.reset()
-    bot.chat("你好")
+    ChatBot.test()
