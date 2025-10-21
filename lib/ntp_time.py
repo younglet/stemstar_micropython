@@ -3,30 +3,37 @@ import ntptime
 import time
 from machine import RTC
 
-# 缓存已同步状态，避免重复同步
-_ntp_synced = False
+# 记录上次成功同步的 UTC 时间戳（秒），初始为 0 表示从未同步
+_last_sync_time = 0
+_SECONDS_IN_24H = 24 * 3600
 
 
-def sync_time(timeout=5):
+def sync_time(timeout=5, force=False):
     """
     同步网络时间（使用 NTP，默认设置 RTC 为 UTC 时间）
 
     参数:
         timeout (int): NTP 请求超时时间（秒）
+        force (bool): 是否强制同步（忽略 24 小时限制）
 
     返回:
         bool: 成功返回 True，失败返回 False
     """
-    global _ntp_synced
-    if _ntp_synced:
-        print("✅ 时间已同步过，跳过重复同步")
-        return True
+    global _last_sync_time
+
+    if not force:
+        current_time = time.time()
+        # 如果系统时间看起来无效（< 2020年），也允许同步
+        if current_time > 1577836800:  # 2020-01-01 UTC
+            if current_time - _last_sync_time < _SECONDS_IN_24H:
+                print("✅ 距离上次同步不足 24 小时，跳过同步")
+                return True
 
     try:
         print(f"📡 正在通过 NTP 同步 UTC 时间（超时: {timeout}s）...")
         ntptime.timeout = timeout
         ntptime.settime()  # 设置 RTC 为 UTC 时间
-        _ntp_synced = True
+        _last_sync_time = time.time()  # 记录本次同步时间
         print("✅ 时间同步成功")
         return True
     except OSError as e:
@@ -45,9 +52,7 @@ def get_local_time(hours_offset=8, formatted=True):
     返回:
         str 或 tuple: 格式化字符串 或 time.localtime() 元组（基于本地时区）
     """
-    # 获取当前 UTC 时间（由 RTC 提供）
     utc_tuple = time.localtime()
-    # 转为时间戳，加上偏移量，再转回结构化时间
     utc_timestamp = time.mktime(utc_tuple)
     local_timestamp = utc_timestamp + hours_offset * 3600
     local_time = time.localtime(local_timestamp)
@@ -70,7 +75,6 @@ def get_http_time():
     返回:
         str: HTTP 格式时间字符串（始终为 UTC）
     """
-    # HTTP 时间必须使用 UTC，并格式化为 RFC 1123
     year, month, day, hour, minute, second, weekday, _ = time.localtime()
 
     _DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -84,7 +88,6 @@ def get_http_time():
         year,
         hour, minute, second
     )
-
 
 
 if __name__ == "__main__":
