@@ -9,20 +9,33 @@ class HCSR04:
     测距范围：2cm ~ 400cm
     """
 
-    def __init__(self, trig_pin: Pin, echo_pin: Pin, echo_timeout_us=500 * 2 * 30):
+    def __init__(self, trig_pin, echo_pin, echo_timeout_us=500 * 2 * 30):
         """
-        :param trig_pin: 已初始化的 Pin 实例（输出模式）
-        :param echo_pin: 已初始化的 Pin 实例（输入模式）
+        初始化超声波传感器（如 HC-SR04）。
+
+        :param trig_pin: GPIO 编号（int）或已初始化的 Pin 实例
+        :param echo_pin: GPIO 编号（int）或已初始化的 Pin 实例
         :param echo_timeout_us: 等待回声信号的最大时间（微秒）
         """
-        self.echo_timeout_us = echo_timeout_us
-        self.trig = trig_pin
-        self.echo = echo_pin
-        
-        # 初始化设置引脚状态
-        self.trig.init(mode=Pin.OUT)
-        self.echo.init(mode=Pin.IN)
+        # 处理 trig_pin
+        if isinstance(trig_pin, int):
+            self.trig = Pin(trig_pin, Pin.OUT)
+        elif isinstance(trig_pin, Pin):
+            self.trig = trig_pin
+            self.trig.init(Pin.OUT)
+        else:
+            raise TypeError("trig_pin 必须是整数（GPIO编号）或 machine.Pin 实例")
 
+        # 处理 echo_pin
+        if isinstance(echo_pin, int):
+            self.echo = Pin(echo_pin, Pin.IN)
+        elif isinstance(echo_pin, Pin):
+            self.echo = echo_pin
+            self.echo.init(Pin.IN)
+        else:
+            raise TypeError("echo_pin 必须是整数（GPIO编号）或 machine.Pin 实例")
+
+        self.echo_timeout_us = echo_timeout_us
         # 确保 trig 初始状态为低电平
         self.trig.value(0)
 
@@ -54,39 +67,66 @@ class HCSR04:
         cm = (pulse_time / 2) / 29.1
         return cm
 
+    @property
+    def distance(self):
+        """只读属性：等同于 get_distance()，返回当前距离值（厘米）"""
+        return self.get_distance()
 
+    @classmethod
+    def test(cls):
+        print("【超声波传感器（HC-SR04）测试程序】")
+        try:
+            trig_pin_num = int(input("请输入 Trig 引脚连接的 GPIO（建议 GPIO14）: ") or "14")
+        except:
+            print("❌ 输入无效，默认使用 GPIO14")
+            trig_pin_num = 14
+        try:
+            echo_pin_num = int(input("请输入 Echo 引脚连接的 GPIO（建议 GPIO12）: ") or "12")
+        except:
+            print("❌ 输入无效，默认使用 GPIO12")
+            echo_pin_num = 12
+        print(f"🔧 初始化 HC-SR04（Trig GPIO{trig_pin_num}，Echo GPIO{echo_pin_num}）...")
+        trig = Pin(trig_pin_num, mode=Pin.OUT)
+        echo = Pin(echo_pin_num, mode=Pin.IN)
+        sensor = cls(trig_pin=trig, echo_pin=echo)
+        print("📡 开始读取距离数据（按 Ctrl+C 停止）")
+        try:
+            while True:
+                distance = sensor.get_distance()
+                print(f"📏 当前距离: {distance:.1f} cm")
+                sleep_us(500000)  # 500ms
+        except KeyboardInterrupt:
+            print("\n👋 程序已退出，关闭传感器")
 
+    @staticmethod
+    def help():
+        print("""
+【HC-SR04 超声波传感器驱动类】
+--------------------
+[硬件要求]:
+  - HC-SR04 超声波传感器模块
+--------------------
+[初始化]:
+    sensor = HCSR04(tri
+--------------------g_pin, echo_pin, echo_timeout_us=30000)
+    # trig_pin         : 已初始化的 Pin 实例（输出模式）
+    # echo_pin         : 已初始化的 Pin 实例（输入模式）
+    # echo_timeout_us  : 等待回声信号的最大时间（微秒），默认 30000us（约 5 米）
+[属性]:
+    - distance        : 只读属性，当前测量的距离值（厘米）
+
+[方法]:
+    - get_distance()  : 获取当前测量的距离值（厘米）
+
+--------------------
+[示例代码]:
+    from machine import Pin
+    from hcsr04 import HCSR04
+
+    sensor = HCSR04(Pin(14), Pin(12))
+    distance = sensor.get_distance()
+    print("当前距离: {:.1f} cm".format(distance))
+""")
 
 if __name__ == "__main__":
-    import time
-    from machine import Pin
-    
-    print('''
-【超声波传感器】正在启动...
-──────────────────────────────────────────────
-【Trig】 -> GPIO14
-【Echo】 -> GPIO12
-──────────────────────────────────────────────
-请按照如上接线说明进行接线，然后按车继续：''')
-
-    input()  # 等待用户确认接线完成并回车继续
-    # 初始化引脚
-    try:
-        print("🚩 开始测试 HCS04 超声波测距...")
-        print("🔧 正在初始化 HCS04 超声波测距...")
-        trig = Pin(14, Pin.OUT)   # Trig 引脚
-        echo = Pin(12, Pin.IN)    # Echo 引脚
-
-        # 创建传感器实例
-        sensor = HCSR04(trig_pin=trig, echo_pin=echo)
-
-        print("📡 正在开始测量距离...")
-        print("🔄 每隔 1 秒测量一次，按 Ctrl+C 退出程序")
-
-        while True:
-            print("🔍 正在获取当前距离数据...")
-            distance = sensor.get_distance()
-            print(f"📏 当前距离: {distance:.1f} cm")
-            time.sleep(1)
-    except KeyboardInterrupt:
-        print("\n👋 程序已退出，关闭传感器")
+    HCSR04.test()
