@@ -7,7 +7,7 @@ class TriLight:
     支持共阳极（is_0_max=True：duty=0 最亮）或共阴极（默认）
     """
 
-    def __init__(self, pin1, pin2, pin3, freq=5000, max_duty=1023, is_0_max=False):
+    def __init__(self, pin1, pin2, pin3, is_0_max=False, freq=5000, max_duty=1023):
         """
         初始化三通道 PWM
         
