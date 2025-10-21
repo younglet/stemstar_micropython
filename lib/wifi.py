@@ -110,7 +110,7 @@ class Wifi:
             }.get(authmode, "未知")
             if ssid in seen_ssids:
                 continue
-            print(f"[{rssi:<2} dBm] SSID: {ssid:<33} ")
+            print(f"[📶 {rssi:<2} dBm] SSID: {ssid:<33} ")
             seen_ssids.append(ssid)
         wlan.active(False) 
         return networks
