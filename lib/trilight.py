@@ -157,18 +157,18 @@ class TriLight:
     deinit()          : 释放资源
 ----------------------------------
 [示例代码]:
-    from trilight import TriLight
-    from machine import Pin
-    from time import sleep_ms
+from trilight import TriLight
+from machine import Pin
+from time import sleep_ms
 
-    light = TriLight(12, 13, 14, is_0_max=False)  # 共阴极 RGB LED
-    light.set_rgb(255, 0, 0)  # 红色
-    sleep_ms(500)
-    light.color = (0, 255, 0)  # 绿色
-    sleep_ms(500)
-    light.b = 255              # 绿色+蓝色 = 青色
-    sleep_ms(500)
-    light.off()                # 关闭
+light = TriLight(Pin(25), Pin(26), Pin(27), is_0_max=False)  # 共阴极 RGB LED
+light.set_rgb(255, 0, 0)  # 红色
+sleep_ms(500)
+light.color = (0, 255, 0)  # 绿色
+sleep_ms(500)
+light.b = 255              # 绿色+蓝色 = 青色
+sleep_ms(500)
+light.off()                # 关闭
 ----------------------------------
 """)
 
