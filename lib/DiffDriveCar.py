@@ -4,8 +4,8 @@ import time
 
 class DiffDriveCar:
     def __init__(self, left_pin1, left_pin2, right_pin1, right_pin2,
-                 direction_left=1, direction_right=1,
-                 freq=5000, max_duty=None):
+                 default_speed=0.6, direction_left=1, direction_right=1,
+                 freq=5000, max_duty=1023):
         """
         初始化双轮小车
         
@@ -13,9 +13,10 @@ class DiffDriveCar:
         :param right_pin1, right_pin2: 右电机控制引脚
         :param direction_left, direction_right: 方向修正（1 或 -1）
         :param freq: PWM 频率（Hz）
-        :param max_duty: 最大占空比（ESP32 默认 1023，RP2040 默认 65535）
+        :param max_duty: 最大占空比（ESP32 默认 1023）
+        :param default_speed: 默认速度（0.0 ~ 1.0），用于 forward/backward 等方法
         """
-        max_duty = 1023
+        self._default_speed = max(0.0, min(1.0, float(default_speed)))
 
         self.left_motor = Motor(
             pin1=left_pin1,
@@ -32,6 +33,14 @@ class DiffDriveCar:
             max_duty=max_duty
         )
 
+    @property
+    def default_speed(self):
+        return self._default_speed
+
+    @default_speed.setter
+    def default_speed(self, value):
+        self._default_speed = max(0.0, min(1.0, float(value)))
+
     def set_speed(self, left_speed, right_speed):
         """直接设置左右轮速度（-1.0 ~ +1.0）"""
         self.left_motor.speed = left_speed
@@ -42,45 +51,61 @@ class DiffDriveCar:
         self.left_motor.stop()
         self.right_motor.stop()
 
-    def forward(self, speed=0.6):
+    def forward(self, speed=None):
         """前进（两轮同向同速）"""
-        self.set_speed(speed, speed)
+        s = self._default_speed if speed is None else speed
+        self.set_speed(s, s)
 
-    def backward(self, speed=0.6):
+    def backward(self, speed=None):
         """后退"""
-        self.set_speed(-speed, -speed)
+        s = self._default_speed if speed is None else speed
+        self.set_speed(-s, -s)
 
-    def turn_left(self, speed=0.6):
-        """左转（右轮前进，左轮停止或后退）"""
-        self.set_speed(-speed, speed)  # 原地左转
-
-    def turn_right(self, speed=0.6):
-        """右转（左轮前进，右轮停止或后退）"""
-        self.set_speed(speed, -speed)  # 原地右转
-
-    def spin_left(self, speed=0.6):
+    def spin_left(self, speed=None):
         """原地向左旋转（左右轮反向）"""
-        self.set_speed(-speed, speed)
+        s = self._default_speed if speed is None else speed
+        self.set_speed(-s, s)
 
-    def spin_right(self, speed=0.6):
+    def spin_right(self, speed=None):
         """原地向右旋转"""
-        self.set_speed(speed, -speed)
+        s = self._default_speed if speed is None else speed
+        self.set_speed(s, -s)
 
-    def arc_turn(self, direction='left', forward_speed=0.6, turn_ratio=0.5):
+    # 兼容方法名
+    turn_left = spin_left
+    turn_right = spin_right
+    left = spin_left
+    right = spin_right
+
+    def arc_turn(self, direction='left', forward_speed=None, turn_ratio=0.5):
         """
         弧线转弯（更平滑）
         :param direction: 'left' or 'right'
-        :param forward_speed: 主速度
-        :param turn_ratio: 转弯比例（0.0~1.0），0=直行，1=原地转
+        :param forward_speed: 主速度（若为 None，使用 default_speed）
+        :param turn_ratio: 转弯比例（0.0~1.0）
         """
+        s = self._default_speed if forward_speed is None else forward_speed
         if direction == 'left':
-            inner = forward_speed * (1 - turn_ratio)
-            outer = forward_speed
+            inner = s * (1 - turn_ratio)
+            outer = s
             self.set_speed(inner, outer)
         else:
-            inner = forward_speed * (1 - turn_ratio)
-            outer = forward_speed
+            inner = s * (1 - turn_ratio)
+            outer = s
             self.set_speed(outer, inner)
+    
+    smooth_turn = arc_turn  # 兼容方法名
+
+    def arc_left(self, forward_speed=None, turn_ratio=0.5):
+        """弧线左转"""
+        self.arc_turn('left', forward_speed, turn_ratio)
+    def arc_right(self, forward_speed=None, turn_ratio=0.5):
+        """弧线右转"""
+        self.arc_turn('right', forward_speed, turn_ratio)
+
+    smooth_left  =  arc_left
+    smooth_right  =  arc_right
+    
 
     def deinit(self):
         """释放资源"""
@@ -92,7 +117,6 @@ class DiffDriveCar:
         """交互式测试程序"""
         print("【双轮小车测试程序】")
         try:
-            # 输入引脚
             l1 = int(input("左电机引脚1 (IN1): ") or "14")
             l2 = int(input("左电机引脚2 (IN2): ") or "15")
             r1 = int(input("右电机引脚1 (IN1): ") or "16")
@@ -101,33 +125,41 @@ class DiffDriveCar:
             print("❌ 输入无效，使用默认引脚：L(14,15) R(16,17)")
             l1, l2, r1, r2 = 14, 15, 16, 17
 
-        # 方向修正
         dir_l = -1 if input("左轮是否反转？(y/N): ").lower() == 'y' else 1
         dir_r = -1 if input("右轮是否反转？(y/N): ").lower() == 'y' else 1
 
-        print(f"🚩 初始化小车：左({l1},{l2}) 右({r1},{r2})")
-        car = cls(l1, l2, r1, r2, direction_left=dir_l, direction_right=dir_r)
+        default_speed_input = input("默认速度（0.0~1.0，默认 0.6）: ") or "0.6"
+        try:
+            default_speed = float(default_speed_input)
+        except:
+            default_speed = 0.6
+
+        print(f"🚩 初始化小车：左({l1},{l2}) 右({r1},{r2})，默认速度={default_speed:.2f}")
+        car = cls(l1, l2, r1, r2,
+                  direction_left=dir_l,
+                  direction_right=dir_r,
+                  default_speed=default_speed)
 
         try:
-            print("🔼  测试 1：前进 2 秒")
-            car.forward(0.6)
+            print("🔼  测试 1：前进（使用默认速度）")
+            car.forward()  # 不传 speed，用默认
             time.sleep(2)
 
-            print("🔽  测试 2：后退 2 秒")
-            car.backward(0.6)
+            print("🔽  测试 2：后退（使用默认速度）")
+            car.backward()
             time.sleep(2)
 
-            print("◀️  测试 3：原地左转 2 秒")
-            car.spin_left(0.6)
+            print("◀️  测试 3：原地左转")
+            car.spin_left()
             time.sleep(2)
 
-            print("▶️  测试 4：原地右转 2 秒")
-            car.spin_right(0.6)
-            time.sleep(12)
+            print("▶️  测试 4：原地右转")
+            car.spin_right()
+            time.sleep(2)
 
-            print("🛑 测试 5：停止")
+            print("🛑 停止")
             car.stop()
-            time.sleep(2)
+            time.sleep(1)
 
             print("✅ 所有测试完成！")
         except Exception as e:
