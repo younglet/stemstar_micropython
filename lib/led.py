@@ -2,7 +2,7 @@ import time
 from machine import Pin, PWM
 
 class LED:
-    def __init__(self, pin):
+    def __init__(self, pin, is_0_max=False):
         """
         初始化 LED 并默认启用 PWM 模式
         :param pin: 引脚编号（int）或 Pin 对象
@@ -17,13 +17,13 @@ class LED:
 
         # 初始化 PWM（频率500Hz）
         try:
-            self.pwm_obj = PWM(self.pin, freq=500, duty=0)
+            duty = 1023 if is_0_max else 0
+            self.pwm_obj = PWM(self.pin, freq=500, duty=duty)
         except Exception as e:
             raise RuntimeError(f"PWM initialization failed on pin {self.pin}: {e}")
-
-        self._brightness = 1023     # 当前亮度，默认为0（关闭）
-        self.is_on = False       # 记录 LED 状态
-        
+        self._brightness = 1023   # 当前亮度，默认为0（关闭）
+        self.is_on = False        # 记录 LED 状态
+        self.is_0_max = is_0_max  # 存储反转标志
 
     @property
     def brightness(self):
@@ -36,7 +36,8 @@ class LED:
         if not (0 <= value <= 1023):
             raise ValueError("Brightness must be between 0 and 1023")
         self._brightness = value
-        self.pwm_obj.duty(value)  # 注意：ESP32/ESP8266 的 duty 范围通常是 0~1023
+        duty = (1023 - value) if self.is_0_max else value
+        self.pwm_obj.duty(duty)  # 注意：ESP32/ESP8266 的 duty 范围通常是 0~1023
     
     def set_brightness(self, brightness):
         self.brightness = brightness
@@ -46,7 +47,8 @@ class LED:
         if self.is_on:
             print("⚠️ LED 原本就是开启的状态")
             return
-        self.pwm_obj.duty(self.brightness)
+        duty = (1023 - self.brightness) if self.is_0_max else self.brightness
+        self.pwm_obj.duty(duty)
         self.is_on = True
         if self._brightness < 20:
             print(f"⚠️ 警告：当前亮度为{self.brightness}，LED 亮度可能不明显。")
@@ -56,7 +58,8 @@ class LED:
         if not self.is_on:
             print("⚠️ LED 原本就是关闭的状态")
             return
-        self.pwm_obj.duty(0)
+        duty = 1023 if self.is_0_max else 0
+        self.pwm_obj.duty(duty)
         self.is_on = False
 
     def switch(self):
@@ -157,6 +160,7 @@ class LED:
 
         for i in range(steps + 1):
             duty = start_brightness + (target_brightness - start_brightness) * i // steps
+            duty = (1023 - duty) if self.is_0_max else duty
             self.pwm_obj.duty(duty)
             time.sleep_ms(interval)
 
@@ -181,6 +185,7 @@ class LED:
 
         for i in range(steps + 1):
             duty = start_brightness + (target_brightness - start_brightness) * i // steps
+            duty = (1023 - duty) if self.is_0_max else duty
             self.pwm_obj.duty(duty)
             time.sleep_ms(interval)
 
@@ -207,6 +212,13 @@ class LED:
             print("❌ 输入无效，默认使用 GPIO4")
             pin_num = 4
         
+        try:
+            is_0_max_input = input("是否使用反转逻辑？（0表示亮度最大时输出0，1表示亮度最大时输出1023，默认0）: ") or "0"
+            is_0_max = bool(int(is_0_max_input))
+        except:
+            print("❌ 输入无效，默认不使用反转逻辑")
+            is_0_max = False
+
         try:
             print(f"🚩 开始测试 LED(GPIO{pin_num}) 功能...")
             time.sleep(1)
@@ -339,3 +351,4 @@ class LED:
 
 if __name__ == '__main__':
     LED.test()
+
