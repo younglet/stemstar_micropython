@@ -115,9 +115,9 @@ class TimeSyncer:
     使用 NTP 同步 RTC 时间，并提供本地时间和 HTTP 时间格式的获取方法。
 --------------------------------
 [初始化]：
-    ts = TimeSyncer(timezone=8)  # 设置本地时区为 UTC+8（北京时间）
+    ts = TimeSyncer(timezone=8)     # 设置本地时区为 UTC+8（北京时间）
 [属性]：
-    ts.is_synchronized      # 返回是否已成功同步时间（布尔值）
+    ts.is_synchronized              # 返回是否已成功同步时间（布尔值）
 [方法]：
     ts.sync(timeout=5, force=False) # 通过 NTP 同步时间
     ts.now(formatted=True)          # 获取本地时间，格式化字符串或 time.localtime 元组
